@@ -5,30 +5,40 @@ interface MenuSectionProps {
   title: string;
   products: Product[];
   id: string;
+  subtitle?: string;
 }
-
 export default function MenuSection({
   title,
   products,
   id,
+  subtitle,
 }: MenuSectionProps) {
   return (
-    <section id={id} className="scroll-mt-24">
-      <div className="mb-5 flex items-end justify-between">
-        <div>
-          <h2 className=" font-playfair-display text-[28px] font-semibold leading-none tracking-[-0.02em] text-[#29241F]">
-            {title}
-          </h2>
 
-          <div className="mt-2 h-[2px] w-7 rounded-full bg-[#9A7135]" />
-        </div>
+    <section id={id} className="scroll-mt-36">
+  <div className="mb-5 flex items-end justify-between">
+    <div>
+      <h2 className="font-playfair-display text-[28px] font-semibold leading-none tracking-[-0.02em] text-[#29241F]">
+        {title}
+      </h2>
 
-        <span className="font-[var(--font-dm-sans)] text-[10px] font-medium uppercase tracking-[0.12em] text-[#7A746C]">
-          {products.length} items
-        </span>
-      </div>
+      {subtitle && (
+        <p className="mt-1.5 font-dm-sans text-[10px] font-medium tracking-[0.04em] text-[#8A8177]">
+          {subtitle}
+        </p>
+      )}
 
-      <ProductGrid products={products} />
-    </section>
+      <div className="mt-2 h-[2px] w-7 rounded-full bg-[#9A7135]" />
+    </div>
+
+    <span className="font-dm-sans text-[10px] font-medium uppercase tracking-[0.12em] text-[#7A746C]">
+      {products.length} items
+    </span>
+  </div>
+
+  <ProductGrid products={products} />
+</section>
+
+
   );
 }

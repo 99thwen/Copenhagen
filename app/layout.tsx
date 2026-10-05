@@ -15,8 +15,9 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Café Copenhagen",
-  description: "Café Copenhagen Digital Menu",
+  title: "Café Copenhagen | Digital Menu",
+  description:
+    "Explore the Café Copenhagen menu — food, coffee, mocktails, shakes, desserts, and more.",
 };
 
 export default function RootLayout({

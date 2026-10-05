@@ -45,7 +45,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Description */}
         {product.description && (
-          <p className="mt-2 line-clamp-3 min-h-[2rem] text-[11px] leading-[1rem] text-[#7A746C]">
+         <p className="mt-2 line-clamp-3 min-h-[2rem] text-[13px] leading-[1.15rem] text-[#5F5A53]">
             {product.description}
           </p>
         )}

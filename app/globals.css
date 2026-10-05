@@ -16,7 +16,14 @@
   --background: #F7F3EC;
   --foreground: #29241F;
 }
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
 * {
   box-sizing: border-box;
 }

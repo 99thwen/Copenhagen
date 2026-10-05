@@ -1,5 +1,6 @@
 import Image from "next/image";
 import MenuSection from "@/components/menu/MenuSection";
+import CategoryBar from "@/components/menu/CategoryBar";
 import { products } from "@/data/products";
 const sections = [
    {
@@ -88,26 +89,48 @@ export default function Home() {
         </header>
 
 
+<CategoryBar sections={sections} />
+
 
       {/* Menu */}
       <div className="mx-auto max-w-5xl px-3 pb-12 pt-7">
         <div className="space-y-12">
-          {sections.map((section) => {
-            const sectionProducts = products.filter(
-              (product) => product.section === section.title
-            );
+        {sections.map((section) => {
+          const sectionProducts = products.filter(
+            (product) => product.section === section.title
+          );
 
-            return (
-              <MenuSection
-                key={section.id}
-                id={section.id}
-                title={section.title}
-                products={sectionProducts}
-              />
-            );
-          })}
+          if (sectionProducts.length === 0) return null;
+
+          return (
+            <MenuSection
+              key={section.id}
+              id={section.id}
+              title={section.title}
+              products={sectionProducts}
+              subtitle={
+                section.id === "breakfast"
+                  ? "08:00 AM – 12:00 PM"
+                  : undefined
+              }
+            />
+          );
+        })}
         </div>
-      </div>
-    </main>
-  );
-}
+
+
+
+<div className="mt-8 pb-8 pt-2">
+  <div className="mx-auto mb-4 h-px w-8 bg-[#9A7135]/30" />
+
+  <p className="text-center font-dm-sans text-[10px] leading-4 text-[#81786E]">
+    Tax will be added according to sales tax charges
+  </p>
+</div>
+
+     
+
+            </div>
+          </main>
+        );
+      }
