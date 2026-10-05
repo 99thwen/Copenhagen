@@ -73,23 +73,24 @@ const sections = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#fafafa]">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-white/95 backdrop-blur-xl">
-          <div className="flex items-center">
+    <main className="min-h-screen bg-[var(--background)]">
+        <header className="sticky top-0 z-50 border-b border-[#8B5E34]/15 bg-[#FFFDF8]/85 shadow-[0_2px_12px_rgba(0,0,0,0.04)] backdrop-blur-[10px]">
+          <div className="mx-auto flex h-[88px] max-w-5xl items-center justify-center px-4">
             <Image
               src="/images/logo.webp"
               alt="Cafe Copenhagen"
-              width={52}
-              height={52}
-              className="h-12 w-12 rounded-full object-cover"
+              width={80}
+              height={80}
+              className="h-[72px] w-[72px] object-contain"
               priority
             />
           </div>
-      </header>
+        </header>
+
+
 
       {/* Menu */}
-      <div className="mx-auto max-w-5xl px-4 pb-12 pt-7">
+      <div className="mx-auto max-w-5xl px-3 pb-12 pt-7">
         <div className="space-y-12">
           {sections.map((section) => {
             const sectionProducts = products.filter(

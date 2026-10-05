@@ -12,8 +12,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
-    <article className="group min-w-0 overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.04]">
-      {/* Product image */}
+    <article className="group min-w-0 overflow-hidden rounded-2xl bg-[#FFFDF9] shadow-[0_2px_12px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.04]">
+      {/* Image */}
       <div className="relative aspect-[1.15/1] w-full overflow-hidden bg-neutral-100">
         {!imageLoaded && (
           <div
@@ -31,41 +31,43 @@ export default function ProductCard({ product }: ProductCardProps) {
             imageLoaded
               ? "scale-100 opacity-100"
               : "scale-[1.02] opacity-0"
-          } group-hover:scale-[1.04]`}
+          } group-hover:scale-[1.03]`}
           onLoad={() => setImageLoaded(true)}
         />
       </div>
 
-      {/* Product information */}
-      <div className="p-3">
-        <h3 className="line-clamp-2 min-h-[2.25rem] text-[14px] font-semibold leading-[1.15rem] text-neutral-900">
-          {product.name}
-        </h3>
+      {/* Content */}
+      <div className="flex min-h-[112px] flex-col px-3 py-3">
+        {/* Product name */}
+        <h3 className="min-h-[2.2rem] font-playfair-display text-[15px] font-semibold leading-[1.1rem] tracking-[-0.01em] text-[#29241F]">
+            {product.name}
+          </h3>
 
+        {/* Description */}
         {product.description && (
-          <p className="mt-1.5 line-clamp-2 text-[11px] leading-[1rem] text-neutral-500">
+          <p className="mt-2 line-clamp-3 min-h-[2rem] text-[11px] leading-[1rem] text-[#7A746C]">
             {product.description}
           </p>
         )}
 
         {/* Price */}
-        <div className="mt-3">
+        <div className="mt-auto pt-2.5">
           {product.sizes ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-end gap-4">
               {product.sizes.map((size) => (
                 <div key={size.name}>
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-neutral-400">
+                  <p className="mb-0.5 text-[8px] font-medium uppercase tracking-[0.12em] text-neutral-400">
                     {size.name}
                   </p>
 
-                  <p className="text-[13px] font-bold text-neutral-950">
+                  <p className="text-[12px] font-semibold text-[#9A7135]">
                     Rs. {size.price.toLocaleString()}
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-[14px] font-bold text-neutral-950">
+            <p className="text-[13px] font-semibold text-[#9A7135]">
               Rs. {product.price?.toLocaleString()}
             </p>
           )}

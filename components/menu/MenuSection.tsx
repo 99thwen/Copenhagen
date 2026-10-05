@@ -16,14 +16,14 @@ export default function MenuSection({
     <section id={id} className="scroll-mt-24">
       <div className="mb-5 flex items-end justify-between">
         <div>
-          <h2 className="text-[22px] font-bold tracking-[-0.02em] text-neutral-950">
+          <h2 className=" font-playfair-display text-[28px] font-semibold leading-none tracking-[-0.02em] text-[#29241F]">
             {title}
           </h2>
 
-          <div className="mt-2 h-[3px] w-8 rounded-full bg-neutral-900" />
+          <div className="mt-2 h-[2px] w-7 rounded-full bg-[#9A7135]" />
         </div>
 
-        <span className="text-[11px] font-medium text-neutral-400">
+        <span className="font-[var(--font-dm-sans)] text-[10px] font-medium uppercase tracking-[0.12em] text-[#7A746C]">
           {products.length} items
         </span>
       </div>
