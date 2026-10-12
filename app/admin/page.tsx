@@ -1,5 +1,8 @@
 "use client";
+"use client";
 import { useEffect, useRef, useState } from "react";
+import { QRCodeCanvas } from "qrcode.react";
+
 import {
   onAuthStateChanged,
   signOut,
@@ -601,6 +604,63 @@ const categories = Array.from(
           </button>
         </header>
 
+
+{/* QR Code Section */}
+<section className="border-b border-[#D8CFC3] py-8">
+  <div className="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 className="font-playfair-display text-2xl font-semibold text-[#29241F]">
+        Menu QR Code
+      </h2>
+      <p className="mt-2 text-sm text-[#7A746C]">
+        Download this code and print it for your tables.
+      </p>
+    </div>
+  </div>
+
+  <div className="mt-6 flex flex-col items-center gap-4 rounded-xl border border-[#E5DCCF] bg-[#FFFDF9] p-6">
+    <div className="bg-white p-4">
+      <QRCodeCanvas
+        id="cafe-copenhagen-qr"
+        value="https://cafecopenhagen.netlify.app/"
+        size={240}
+        level="H"
+        includeMargin
+      />
+    </div>
+
+    <h3 className="font-playfair-display text-xl font-semibold text-[#29241F]">
+      Café Copenhagen
+    </h3>
+
+    <p className="text-center text-sm text-[#7A746C]">
+      Scan to view our menu
+    </p>
+
+    <button
+      type="button"
+      onClick={() => {
+        const canvas = document.getElementById(
+          "cafe-copenhagen-qr"
+        ) as HTMLCanvasElement | null;
+
+        if (!canvas) return;
+
+        const link = document.createElement("a");
+        link.download = "cafe-copenhagen-menu-qr.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      }}
+      className="rounded-lg bg-[#29241F] px-5 py-3 text-sm font-medium text-white hover:bg-[#45392D]"
+    >
+      Download QR Code (PNG)
+    </button>
+
+    <p className="break-all text-center text-xs text-[#7A746C]">
+      https://cafecopenhagen.netlify.app/
+    </p>
+  </div>
+</section>
 
 
 {/* Category Management */}
