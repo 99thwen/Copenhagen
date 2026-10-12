@@ -5,43 +5,52 @@ import { useEffect, useState } from "react";
 import MenuSection from "@/components/menu/MenuSection";
 import CategoryBar from "@/components/menu/CategoryBar";
 import { products as localProducts } from "@/data/products";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Product } from "@/types/product";
+import type { MenuCategory } from "@/types/category";
 
-const sections = [
-  { id: "breakfast", title: "Breakfast" },
-  { id: "starters", title: "Starters" },
-  { id: "salads", title: "Salads" },
-  { id: "main-course", title: "Main Course" },
-  { id: "pizza", title: "Pizza" },
-  { id: "burgers", title: "Burgers" },
-  { id: "sandwiches", title: "Sandwiches" },
-  { id: "pasta", title: "Pasta" },
-  {
-    id: "soft-drinks-cold-drinks",
-    title: "Soft Drinks & Cold Drinks",
-  },
-  { id: "mocktails", title: "Mocktails" },
-  { id: "shakes", title: "Shakes" },
-  { id: "cold-coffees", title: "Cold Coffees" },
-  { id: "hot-coffees-specials", title: "Hot Coffees & Specials" },
-  { id: "hot-tea", title: "Hot Tea" },
-  { id: "desserts", title: "Desserts" },
-  { id: "cakes", title: "Cakes" },
+const fallbackCategories: MenuCategory[] = [
+  { id: "breakfast", title: "Breakfast", order: 1, subtitle: "08:00 AM – 12:00 PM" },
+  { id: "starters", title: "Starters", order: 2 },
+  { id: "salads", title: "Salads", order: 3 },
+  { id: "main-course", title: "Main Course", order: 4 },
+  { id: "pizza", title: "Pizza", order: 5 },
+  { id: "burgers", title: "Burgers", order: 6 },
+  { id: "sandwiches", title: "Sandwiches", order: 7 },
+  { id: "pasta", title: "Pasta", order: 8 },
+  { id: "soft-drinks-cold-drinks", title: "Soft Drinks & Cold Drinks", order: 9 },
+  { id: "mocktails", title: "Mocktails", order: 10 },
+  { id: "shakes", title: "Shakes", order: 11 },
+  { id: "cold-coffees", title: "Cold Coffees", order: 12 },
+  { id: "hot-coffees-specials", title: "Hot Coffees & Specials", order: 13 },
+  { id: "hot-tea", title: "Hot Tea", order: 14 },
+  { id: "desserts", title: "Desserts", order: 15 },
+  { id: "cakes", title: "Cakes", order: 16 },
 ];
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>(localProducts);
+  const [sections, setSections] = useState<MenuCategory[]>(fallbackCategories);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadProducts() {
+    async function loadMenu() {
       try {
-        const snapshot = await getDocs(collection(db, "products"));
+        const [productSnapshot, categorySnapshot] = await Promise.all([
+          getDocs(collection(db, "products")),
+          getDocs(
+            query(collection(db, "categories"), orderBy("order", "asc"))
+          ),
+        ]);
 
-        const firebaseProducts = snapshot.docs.map(
+        const firebaseProducts = productSnapshot.docs.map(
           (item) =>
             ({
               id: item.id,
@@ -49,18 +58,32 @@ export default function Home() {
             }) as Product
         );
 
-        if (!cancelled && firebaseProducts.length > 0) {
+        const firebaseCategories = categorySnapshot.docs.map(
+          (item) => item.data() as MenuCategory
+        );
+
+        if (cancelled) return;
+
+        if (firebaseProducts.length > 0) {
           setProducts(firebaseProducts);
+        }
+
+        if (firebaseCategories.length > 0) {
+          setSections(
+            firebaseCategories
+              .filter((category) => category.id && category.title)
+              .sort((a, b) => a.order - b.order)
+          );
         }
       } catch (error) {
         console.error(
-          "Couldn't load Firebase menu. Showing the local menu instead.",
+          "Couldn't load the Firebase menu. Showing the local menu instead.",
           error
         );
       }
     }
 
-    void loadProducts();
+    void loadMenu();
 
     return () => {
       cancelled = true;
@@ -82,10 +105,11 @@ export default function Home() {
         </div>
       </header>
 
-      <CategoryBar sections={sections} />
+      <CategoryBar
+        sections={sections.map(({ id, title }) => ({ id, title }))}
+      />
 
       <div className="mx-auto w-full max-w-7xl px-3 pb-12 pt-7 md:px-6 lg:px-8">
-
         <div className="space-y-12">
           {sections.map((section) => {
             const sectionProducts = products.filter(
@@ -101,9 +125,10 @@ export default function Home() {
                 title={section.title}
                 products={sectionProducts}
                 subtitle={
-                  section.id === "breakfast"
+                  section.subtitle ??
+                  (section.id === "breakfast"
                     ? "08:00 AM – 12:00 PM"
-                    : undefined
+                    : undefined)
                 }
               />
             );

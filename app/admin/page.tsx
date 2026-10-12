@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   onAuthStateChanged,
   signOut,
@@ -10,12 +10,15 @@ import {
   doc,
   getDocs,
   setDoc,
+  updateDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { isAdminUser } from "@/lib/admin";
 import { products as existingProducts } from "@/data/products";
 import type { Product } from "@/types/product";
+import type { MenuCategory } from "@/types/category";
 
 type FormData = {
   name: string;
@@ -63,6 +66,16 @@ export default function AdminPage() {
 
   const [checking, setChecking] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
+  const [menuCategories, setMenuCategories] = useState<MenuCategory[]>([]);
+const categoryRefs = useRef<Record<string, HTMLElement | null>>({});
+const [scrollToCategoryId, setScrollToCategoryId] = useState<string | null>(null);
+    const [loadingCategories, setLoadingCategories] = useState(true);
+    const [showCategoryForm, setShowCategoryForm] = useState(false);
+    const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(null);
+    const [categoryTitle, setCategoryTitle] = useState("");
+    const [categoryOrder, setCategoryOrder] = useState("1");
+
+
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -91,6 +104,37 @@ export default function AdminPage() {
     }
   }
 
+  
+async function loadCategories() {
+  setLoadingCategories(true);
+
+  try {
+    const snapshot = await getDocs(collection(db, "categories"));
+
+    const items = snapshot.docs.map(
+      (item) => ({
+        ...item.data(),
+        id: item.id,
+      }) as MenuCategory
+    );
+
+    const uniqueItems = Array.from(
+      new Map(items.map((item) => [item.id, item])).values()
+    );
+
+    uniqueItems.sort((a, b) => a.order - b.order);
+    setMenuCategories(uniqueItems);
+  } catch (err) {
+    console.error("Couldn't load categories:", err);
+    setError("Couldn't load categories. Check your Firestore rules.");
+  } finally {
+    setLoadingCategories(false);
+  }
+}
+
+
+
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user || !isAdminUser(user.uid)) {
@@ -99,11 +143,32 @@ export default function AdminPage() {
       }
 
       setChecking(false);
-      void loadProducts();
+    void loadProducts();
+    void loadCategories();
+
     });
 
     return () => unsubscribe();
   }, [router]);
+
+
+
+  
+useEffect(() => {
+  if (!scrollToCategoryId || loadingCategories) return;
+
+  const element = categoryRefs.current[scrollToCategoryId];
+
+  if (element) {
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+    setScrollToCategoryId(null);
+  }
+}, [scrollToCategoryId, loadingCategories, menuCategories]);
+
+
 
   function startAdd() {
     setEditingProduct(null);
@@ -112,6 +177,159 @@ export default function AdminPage() {
     setMessage("");
     setShowForm(true);
   }
+  
+
+function startAddCategory() {
+  setEditingCategory(null);
+  setCategoryTitle("");
+  setCategoryOrder(String(menuCategories.length + 1));
+  setError("");
+  setMessage("");
+  setShowCategoryForm(true);
+}
+
+function startEditCategory(category: MenuCategory) {
+  setEditingCategory(category);
+  setCategoryTitle(category.title);
+  setCategoryOrder(String(category.order));
+  setError("");
+  setMessage("");
+  setShowCategoryForm(true);
+}
+
+
+async function handleSaveCategory(
+  e: React.FormEvent<HTMLFormElement>
+) {
+  e.preventDefault();
+  setError("");
+  setMessage("");
+
+  const title = categoryTitle.trim();
+  const order = Number(categoryOrder);
+
+  if (!title) {
+    setError("Enter a category name.");
+    return;
+  }
+
+  if (!Number.isInteger(order) || order < 1) {
+    setError("Enter a valid order number (1 or greater).");
+    return;
+  }
+
+  const id =
+    editingCategory?.id ??
+    title.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+  if (!id) {
+    setError("Enter a valid category name using letters or numbers.");
+    return;
+  }
+
+  const duplicate = menuCategories.some(
+    (category) =>
+      category.id !== editingCategory?.id &&
+      (category.id === id ||
+        category.title.toLowerCase() === title.toLowerCase())
+  );
+
+  if (duplicate) {
+    setError("A category with this name already exists.");
+    return;
+  }
+
+  setSaving(true);
+
+  try {
+    const categoryData: MenuCategory = {
+      id,
+      title,
+      order,
+      ...(id === "breakfast"
+        ? {
+            subtitle:
+              editingCategory?.subtitle ?? "08:00 AM – 12:00 PM",
+          }
+        : {}),
+    };
+
+    const batch = writeBatch(db);
+
+    batch.set(doc(db, "categories", id), categoryData);
+
+    // If the category name changed, update its existing products too.
+    if (editingCategory && editingCategory.title !== title) {
+      const affectedProducts = products.filter(
+        (product) => product.section === editingCategory.title
+      );
+
+      affectedProducts.forEach((product) => {
+        batch.update(doc(db, "products", product.id), {
+          section: title,
+        });
+      });
+    }
+
+    await batch.commit();
+
+ 
+await Promise.all([loadCategories(), loadProducts()]);
+
+setShowCategoryForm(false);
+setEditingCategory(null);
+
+if (!editingCategory) {
+  setScrollToCategoryId(id);
+}
+
+    setMessage(
+      editingCategory
+        ? "Category updated successfully."
+        : "Category added successfully."
+    );
+  } catch (err) {
+    console.error("Saving category failed:", err);
+    setError("Couldn't save the category. Check your Firestore rules.");
+  } finally {
+    setSaving(false);
+  }
+}
+
+
+
+async function handleDeleteCategory(category: MenuCategory) {
+  const hasProducts = products.some(
+    (product) => product.section === category.title
+  );
+
+  if (hasProducts) {
+    setError(
+      `Cannot delete "${category.title}" because it still has products. Move or delete those products first.`
+    );
+    setMessage("");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Delete the "${category.title}" category?`
+  );
+
+  if (!confirmed) return;
+
+  setError("");
+  setMessage("");
+
+  try {
+    await deleteDoc(doc(db, "categories", category.id));
+    await loadCategories();
+    setMessage(`"${category.title}" category deleted.`);
+  } catch (err) {
+    console.error("Deleting category failed:", err);
+    setError("Couldn't delete the category. Check your Firestore rules.");
+  }
+}
+
 
     function startEdit(product: Product) {
     setEditingProduct(product);
@@ -349,12 +567,18 @@ export default function AdminPage() {
     );
   }
 
-  const categories = Array.from(
-    new Set([
-      ...existingProducts.map((product) => product.section),
-      ...products.map((product) => product.section),
-    ])
-  ).sort((a, b) => a.localeCompare(b));
+
+  
+const categories = Array.from(
+  new Set([
+    ...menuCategories.map((category) => category.title),
+    ...existingProducts.map((product) => product.section),
+    ...products.map((product) => product.section),
+  ])
+).sort((a, b) => a.localeCompare(b));
+
+
+
 
   return (
     <main className="min-h-screen bg-[#F7F3EC] px-4 py-8 sm:px-8">
@@ -377,6 +601,148 @@ export default function AdminPage() {
           </button>
         </header>
 
+
+
+{/* Category Management */}
+<section className="border-b border-[#D8CFC3] py-8">
+  <div className="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 className="font-playfair-display text-2xl font-semibold text-[#29241F]">
+        Categories
+      </h2>
+      <p className="mt-2 text-sm text-[#7A746C]">
+        {menuCategories.length} categories
+      </p>
+    </div>
+
+    <button
+      type="button"
+      onClick={startAddCategory}
+      className="rounded-lg bg-[#29241F] px-5 py-3 text-sm font-medium text-white hover:bg-[#45392D]"
+    >
+      + Add category
+    </button>
+  </div>
+
+  {loadingCategories ? (
+    <p className="mt-5 text-sm text-[#7A746C]">
+      Loading categories...
+    </p>
+  ) : (
+    <div className="mt-5 space-y-3">
+      {Array.from(
+  new Map(menuCategories.map((category) => [category.id, category])).values()
+).map((category) => (
+        <div
+          key={category.id}
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E5DCCF] bg-[#FFFDF9] p-4"
+        >
+          <div>
+            <h3 className="font-medium text-[#29241F]">
+              {category.title}
+            </h3>
+            <p className="mt-1 text-xs text-[#7A746C]">
+              Position: {category.order}
+              {" · "}
+              {products.filter(
+                (product) => product.section === category.title
+              ).length}{" "}
+              products
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => startEditCategory(category)}
+              className="rounded-lg border border-[#D8CFC3] px-3 py-2 text-sm text-[#29241F] hover:bg-[#F3EBDD]"
+            >
+              Edit
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void handleDeleteCategory(category)}
+              className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-700 hover:bg-red-50"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+
+  {showCategoryForm && (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 p-3 sm:p-6">
+      <form
+        onSubmit={handleSaveCategory}
+        className="w-full max-w-lg space-y-4 rounded-2xl border border-[#E5DCCF] bg-[#FFFDF9] p-5 shadow-2xl sm:p-6"
+      >
+        <h3 className="font-playfair-display text-xl font-semibold text-[#29241F]">
+          {editingCategory ? "Edit category" : "Add a category"}
+        </h3>
+
+        <div>
+          <label className="mb-1 block text-sm text-[#29241F]">
+            Category name *
+          </label>
+          <input
+            required
+            value={categoryTitle}
+            onChange={(e) => setCategoryTitle(e.target.value)}
+            className="w-full rounded-lg border border-[#D8CFC3] bg-white px-3 py-3 text-sm"
+            placeholder="e.g. Brunch"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm text-[#29241F]">
+            Display order *
+          </label>
+          <input
+            required
+            type="number"
+            min="1"
+            step="1"
+            value={categoryOrder}
+            onChange={(e) => setCategoryOrder(e.target.value)}
+            className="w-full rounded-lg border border-[#D8CFC3] bg-white px-3 py-3 text-sm"
+          />
+          <p className="mt-1 text-xs text-[#7A746C]">
+            Lower numbers appear earlier in the menu.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-3 pt-2">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-lg bg-[#29241F] px-5 py-3 text-sm font-medium text-white disabled:opacity-60"
+          >
+            {saving
+              ? "Saving..."
+              : editingCategory
+                ? "Save changes"
+                : "Add category"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowCategoryForm(false)}
+            disabled={saving}
+            className="rounded-lg border border-[#D8CFC3] px-5 py-3 text-sm text-[#29241F]"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  )}
+</section>
+
+
+
         <section className="py-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -388,12 +754,8 @@ export default function AdminPage() {
               </p>
             </div>
 
-            <button
-              onClick={startAdd}
-              className="rounded-lg bg-[#29241F] px-5 py-3 text-sm font-medium text-white hover:bg-[#45392D]"
-            >
-              + Add product
-            </button>
+           
+
           </div>
 
           {message && (
@@ -594,31 +956,59 @@ export default function AdminPage() {
           ) : (
 
 <div className="mt-6 space-y-10">
-  {Array.from(
-    new Set([
-      ...existingProducts.map((product) => product.section),
-      ...products.map((product) => product.section),
-    ])
-  ).map((section) => {
-    const sectionProducts = products.filter(
-      (product) => product.section === section
-    );
 
-    if (sectionProducts.length === 0) return null;
 
-    return (
-      <section key={section} className="scroll-mt-6">
-        <div className="mb-4 flex items-center justify-between border-b border-[#E5DCCF] pb-2">
+{menuCategories.map((category) => {
+  const section = category.title;
+
+  const sectionProducts = products.filter(
+    (product) => product.section === section
+  );
+
+  return (
+   <section
+  key={category.id}
+  ref={(element) => {
+    categoryRefs.current[category.id] = element;
+  }}
+  className="scroll-mt-6"
+>
+      <div className="mb-4 flex items-center justify-between border-b border-[#E5DCCF] pb-2">
+        <div>
           <h2 className="text-xl font-semibold text-[#29241F]">
             {section}
           </h2>
-
-          <span className="text-xs uppercase tracking-wider text-[#7A746C]">
+          <p className="mt-1 text-xs text-[#7A746C]">
             {sectionProducts.length}{" "}
-            {sectionProducts.length === 1 ? "item" : "items"}
-          </span>
+            {sectionProducts.length === 1 ? "product" : "products"}
+          </p>
         </div>
 
+        <button
+          type="button"
+          onClick={() => {
+            setEditingProduct(null);
+            setForm({ ...emptyForm, section });
+            setError("");
+            setMessage("");
+            setShowForm(true);
+          }}
+          className="rounded-lg bg-[#29241F] px-4 py-2 text-sm font-medium text-white hover:bg-[#45392D]"
+        >
+          + Add product
+        </button>
+      </div>
+
+      {sectionProducts.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-[#D8CFC3] bg-[#FFFDF9] p-6 text-center">
+          <p className="text-sm text-[#7A746C]">
+            No products in this category yet.
+          </p>
+          <p className="mt-1 text-sm font-medium text-[#29241F]">
+            Click “+ Add product” to add the first one.
+          </p>
+        </div>
+      ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {sectionProducts.map((product) => (
             <article
@@ -680,9 +1070,13 @@ export default function AdminPage() {
             </article>
           ))}
         </div>
-      </section>
-    );
-  })}
+      )}
+    </section>
+  );
+})}
+
+
+
 </div>
 
           )}
