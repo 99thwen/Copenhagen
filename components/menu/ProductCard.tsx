@@ -14,7 +14,9 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <article className="group min-w-0 overflow-hidden rounded-2xl bg-[#FFFDF9] shadow-[0_2px_12px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.04]">
       {/* Image */}
-      <div className="relative aspect-[1.15/1] w-full overflow-hidden bg-neutral-100">
+ 
+<div className="relative aspect-[1.15/1] w-full overflow-hidden bg-neutral-100 md:aspect-[1.4/1] lg:aspect-[1.6/1]">
+
         {!imageLoaded && (
           <div
             aria-hidden="true"
@@ -26,7 +28,8 @@ export default function ProductCard({ product }: ProductCardProps) {
           src={product.image}
           alt={product.name}
           fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px"
+    
+sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 400px"
           className={`object-cover transition-all duration-500 ease-out ${
             imageLoaded
               ? "scale-100 opacity-100"
