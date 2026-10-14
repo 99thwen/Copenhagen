@@ -1,6 +1,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import PageTransition from "@/components/PageTransition";
 
 const contactDetails = [
   {
@@ -25,7 +26,7 @@ const contactDetails = [
     icon: "tiktok",
     title: "TikTok",
     detail: "@cafe.copenhagen",
-    href: "https://www.tiktok.com/@cafe.copenhagen/video/7651109775106673927?is_from_webapp=1&sender_device=pc",
+    href: "https://www.tiktok.com/@cafe.copenhagen",
   },
  
   {
@@ -33,16 +34,11 @@ const contactDetails = [
     title: "Address",
     detail: "University Town, Bhittani Plaza 2 floor.",
   },
-  {
-    icon: "email",
-    title: "Email",
-    detail: "cafecopenhagen3@gmail.com",
-    href: "mailto:cafecopenhagen3@gmail.com",
-  },
+ 
   {
     icon: "clock",
     title: "Opening Hours",
-    detail: "Monday – Sunday: 9:00 AM – 11:00 PM",
+    detail: "Monday – Sunday: 9:30 AM – 11:00 PM",
   },
 
 ];
@@ -94,12 +90,7 @@ function ContactIcon({ type }: { type: string }) {
         </>
       )}
 
-      {type === "email" && (
-        <>
-          <rect x="3" y="5" width="18" height="14" rx="1.5" />
-          <path d="m4 7 8 6 8-6" />
-        </>
-      )}
+    
 
       {type === "clock" && (
         <>
@@ -115,6 +106,7 @@ function ContactIcon({ type }: { type: string }) {
 
 export default function ContactPage() {
   return (
+     <PageTransition>
     <main className="min-h-screen bg-[#FFFDF8] text-[#29241F]">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-[#8B5E34]/15 bg-[#FFFDF8]/85 shadow-[0_2px_12px_rgba(0,0,0,0.04)] backdrop-blur-[10px]">
@@ -132,7 +124,7 @@ export default function ContactPage() {
             </a>
 
             <a
-              href="https://www.tiktok.com/@cafe.copenhagen/video/7651109775106673927?is_from_webapp=1&sender_device=pc"
+              href="https://www.tiktok.com/@cafe.copenhagen"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="TikTok"
@@ -208,11 +200,6 @@ export default function ContactPage() {
                   </p>
                 </div>
 
-                {item.href && (
-                  <span className="text-lg text-[#A8793E]" aria-hidden="true">
-                    ↗
-                  </span>
-                )}
               </>
             );
 
@@ -252,5 +239,6 @@ export default function ContactPage() {
         </div>
       </section>
     </main>
+    </PageTransition>
   );
 }

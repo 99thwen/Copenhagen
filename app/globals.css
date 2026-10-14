@@ -54,3 +54,24 @@ img {
   background: #171717;
   color: white;
 }
+
+
+.page-transition {
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 250ms ease,
+    transform 250ms ease;
+}
+
+.page-transition-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition {
+    transition: none;
+    transform: none;
+  }
+}

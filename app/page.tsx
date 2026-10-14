@@ -131,7 +131,7 @@ export default function Home() {
 
   {/* TikTok */}
   <a
-    href="https://www.tiktok.com/@cafe.copenhagen/video/7651109775106673927?is_from_webapp=1&sender_device=pc"
+    href="https://www.tiktok.com/@cafe.copenhagen"
     target="_blank"
     rel="noopener noreferrer"
     aria-label="TikTok"

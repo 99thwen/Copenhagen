@@ -1,9 +1,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-
+import PageTransition from "@/components/PageTransition";
 export default function AboutPage() {
-  return (
+  return (  
+  <PageTransition>
     <main className="min-h-screen bg-[var(--background)] text-[#29241F]">
       {/* Header — matching the customer menu */}
       <header className="sticky top-0 z-50 border-b border-[#8B5E34]/15 bg-[#FFFDF8]/85 shadow-[0_2px_12px_rgba(0,0,0,0.04)] backdrop-blur-[10px]">
@@ -41,7 +42,7 @@ export default function AboutPage() {
 
             {/* TikTok */}
             <a
-              href="https://www.tiktok.com/@cafe.copenhagen/video/7651109775106673927?is_from_webapp=1&sender_device=pc"
+              href="https://www.tiktok.com/@cafe.copenhagen"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="TikTok"
@@ -231,5 +232,6 @@ export default function AboutPage() {
         </div>
       </div>
     </main>
+    </PageTransition>
   );
 }
